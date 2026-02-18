@@ -1,117 +1,70 @@
-# 🛒 Internet Shop Database Architecture
+### Файл README.md
 
-## 📖 Business Logic
+```markdown
+# 🛒 E-commerce Database Project
 
-Client can:
+## 🗄 Структура бази даних (OLTP)
 
-- 🔐 Login → creates record in `users`
-- 👀 View product → creates record in `events`
-- 🧺 Add to cart / Buy → creates record in `orders` and `events`
+### 👥 Users
+| Поле | Тип | Опис |
+| :--- | :--- | :--- |
+| **id** | uuid (PK) | Унікальний ідентифікатор користувача |
+| **name** | text | Ім'я користувача |
+| **email** | text | Електронна пошта |
 
----
+### 📦 Products
+| Поле | Тип | Опис |
+| :--- | :--- | :--- |
+| **id** | int (PK) | Унікальний ідентифікатор товару |
+| **name** | text | Назва товару |
+| **price** | int | Ціна товару |
 
-# 🧩 Database Relations
+### 🧾 Orders
+| Поле | Тип | Опис |
+| :--- | :--- | :--- |
+| **id** | int (PK) | Номер замовлення |
+| **sold** | boolean | Статус оплати |
+| **user_id** | uuid (FK) | Посилання на користувача |
+| **product_ids** | [int] (FK) | Список товарів у замовленні |
+| **event_id** | uuid (FK) | Посилання на подію створення |
 
-## 📦 Orders
-
-- many orders → one user
-- many orders ↔ many products (via join table)
-
-## 🛍 Products
-
-- one product → many orders
-- one product → many events
-
-## 👤 Users
-
-- one user → many orders
-- one user → many events
-
----
-
-# 🗄 OLTP Database Schema
-
----
-
-## 👤 USERS
-
-| Field | Type | Description |
-|---|---|---|
-| id | uuid PK | User identifier |
-| name | text | User name |
-| email | text | Email address |
+### 🔔 Events
+| Поле | Тип | Опис |
+| :--- | :--- | :--- |
+| **id** | uuid (PK) | Унікальний ідентифікатор події |
+| **type** | ENUM | Тип (view, cart, purchase) |
+| **date_created** | date | Дата створення запису |
+| **user_id** | uuid (FK) | Хто вчинив дію |
+| **order_id** | uuid (FK) | Посилання на замовлення (якщо є) |
+| **product_id** | int (FK) | Посилання на товар |
 
 ---
 
-## 🛍 PRODUCTS
+## 📐 Схема зв'язків (ER Diagram)
 
-| Field | Type | Description |
-|---|---|---|
-| id | uuid PK | Product identifier |
-| name | text | Product name |
-| price | int | Product price |
-
----
-
-## 📦 ORDERS
-
-| Field | Type | Description |
-|---|---|---|
-| id | uuid PK | Order identifier |
-| sold | boolean | Purchase completed |
-| user_id | uuid FK → users.id | Owner |
+```mermaid
+erDiagram
+    Users ||--o{ Orders : "places"
+    Users ||--o{ Events : "triggers"
+    Products ||--o{ Events : "is viewed in"
+    Orders ||--o{ Events : "generates"
+    Orders }o--o{ Products : "contains"
+```
 
 ---
 
-## 🔗 ORDER_PRODUCTS (Join Table)
+## 📊 Аналітика (OLAP)
 
-Many-to-many relation between orders and products.
-
-| Field | Type |
-|---|---|
-| order_id | uuid FK |
-| product_id | uuid FK |
-
----
-
-## 📊 EVENTS
-
-Tracks user activity.
-
-| Field | Type | Description |
-|---|---|---|
-| id | uuid PK | Event identifier |
-| type | ENUM | sold / seen / inbasket |
-| date_created | timestamp | Event timestamp |
-| user_id | uuid FK → users.id | User |
-| order_id | uuid FK → orders.id | Optional |
-| product_id | uuid FK → products.id | Product |
+Система дозволяє отримувати наступні дані для аналізу бізнес-процесів:
+1. 🎯 **Пошук покупців:** Визначення списку `users`, які купили конкретний товар.
+2. 👁 **Перегляди:** Статистика кількості переглядів кожного товару.
+3. 💰 **Конверсія:** Співвідношення кількості переглядів до кількості реальних покупок.
+4. 👤 **Персоналізація:** Аналіз покупок конкретного користувача для створення рекомендацій.
 
 ---
 
-# 📈 OLAP Questions
-
-Example analytical queries:
-
-- 🎲 Random product — which users bought it?
-- 👀 How many users viewed product?
-- 💰 How many purchases were made?
-- 👤 How many times specific user bought product?
-
----
-
-# 🧠 Architecture Notes
-
-✅ Events table used as behavioral log (analytics ready)  
-✅ Orders separated from events  
-✅ Many-to-many implemented via join table  
-❌ No array foreign keys (anti-pattern in relational DB)
-
----
-
-# 🚀 Possible Extensions
-
-- order status enum (pending / paid / cancelled)
-- product categories
-- session tracking
-- recommendation engine
+## 🚀 Бізнес-логіка
+- **Авторизація:** створює запис у `users`.
+- **Перегляд товару:** генерує запис у `events`.
+- **Купівля:** одночасно створює записи в `orders` та відповідний `event`.
+```

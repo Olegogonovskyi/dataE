@@ -1,1 +1,117 @@
-ssss
+# 🛒 Internet Shop Database Architecture
+
+## 📖 Business Logic
+
+Client can:
+
+- 🔐 Login → creates record in `users`
+- 👀 View product → creates record in `events`
+- 🧺 Add to cart / Buy → creates record in `orders` and `events`
+
+---
+
+# 🧩 Database Relations
+
+## 📦 Orders
+
+- many orders → one user
+- many orders ↔ many products (via join table)
+
+## 🛍 Products
+
+- one product → many orders
+- one product → many events
+
+## 👤 Users
+
+- one user → many orders
+- one user → many events
+
+---
+
+# 🗄 OLTP Database Schema
+
+---
+
+## 👤 USERS
+
+| Field | Type | Description |
+|---|---|---|
+| id | uuid PK | User identifier |
+| name | text | User name |
+| email | text | Email address |
+
+---
+
+## 🛍 PRODUCTS
+
+| Field | Type | Description |
+|---|---|---|
+| id | uuid PK | Product identifier |
+| name | text | Product name |
+| price | int | Product price |
+
+---
+
+## 📦 ORDERS
+
+| Field | Type | Description |
+|---|---|---|
+| id | uuid PK | Order identifier |
+| sold | boolean | Purchase completed |
+| user_id | uuid FK → users.id | Owner |
+
+---
+
+## 🔗 ORDER_PRODUCTS (Join Table)
+
+Many-to-many relation between orders and products.
+
+| Field | Type |
+|---|---|
+| order_id | uuid FK |
+| product_id | uuid FK |
+
+---
+
+## 📊 EVENTS
+
+Tracks user activity.
+
+| Field | Type | Description |
+|---|---|---|
+| id | uuid PK | Event identifier |
+| type | ENUM | sold / seen / inbasket |
+| date_created | timestamp | Event timestamp |
+| user_id | uuid FK → users.id | User |
+| order_id | uuid FK → orders.id | Optional |
+| product_id | uuid FK → products.id | Product |
+
+---
+
+# 📈 OLAP Questions
+
+Example analytical queries:
+
+- 🎲 Random product — which users bought it?
+- 👀 How many users viewed product?
+- 💰 How many purchases were made?
+- 👤 How many times specific user bought product?
+
+---
+
+# 🧠 Architecture Notes
+
+✅ Events table used as behavioral log (analytics ready)  
+✅ Orders separated from events  
+✅ Many-to-many implemented via join table  
+❌ No array foreign keys (anti-pattern in relational DB)
+
+---
+
+# 🚀 Possible Extensions
+
+- order status enum (pending / paid / cancelled)
+- product categories
+- session tracking
+- recommendation engine
